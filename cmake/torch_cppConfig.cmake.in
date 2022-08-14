@@ -6,4 +6,6 @@ set(LIBTORCH_DIR "/opt/libtorch")
 list(APPEND CMAKE_PREFIX_PATH ${LIBTORCH_DIR})
 find_dependency(Torch)
 
+find_dependency(OpenCV)
+
 include("${CMAKE_CURRENT_LIST_DIR}/@PROJECT_NAME@Targets.cmake")

@@ -29,9 +29,21 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
+      - name: Setup python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.x"
+
       - name: Setup environment
         run: |
           sudo apt-get update
+          sudo apt-get install -y --no-install-recommends libopencv-dev
+
       - name: Test building
         run: |
           make apps -j`nproc`
+
+      - name: Unit test
+        continue-on-error: true
+        run: |
+          make unittest -j`nproc`

@@ -1,7 +1,8 @@
 cmake_minimum_required(VERSION 3.10)
 
 set(SOURCE_FILES
-  ${PROJECT_SOURCE_DIR}/src/torch_cpp.cpp
+  ${PROJECT_SOURCE_DIR}/src/SuperPoint.cpp
+  ${PROJECT_SOURCE_DIR}/src/SuperPointModel.cpp
 )
 
 add_library(${LIBRARY_NAME}
@@ -13,11 +14,13 @@ target_include_directories(${LIBRARY_NAME}
   SYSTEM PUBLIC
     $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include>
+    ${OpenCV_INCLUDE_DIRS}
   PRIVATE
 )
 
 target_link_libraries(${LIBRARY_NAME}
   PUBLIC
+    ${OpenCV_LIBRARIES}
   PRIVATE
     ${TORCH_LIBRARIES}
 )

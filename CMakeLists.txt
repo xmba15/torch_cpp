@@ -11,11 +11,35 @@ set(LIBTORCH_DIR "/opt/libtorch")
 list(APPEND CMAKE_PREFIX_PATH ${LIBTORCH_DIR})
 find_package(Torch REQUIRED)
 
+find_package(OpenCV REQUIRED)
+
+find_package(CUDA QUIET)
+
+if(CUDA_FOUND AND USE_GPU)
+  add_definitions(-DENABLE_GPU=1)
+else()
+  add_definitions(-DENABLE_GPU=0)
+endif()
+
+add_compile_options(
+  "$<$<CONFIG:Debug>:-DENABLE_DEBUG=1>"
+  "$<$<CONFIG:Release>:-DENABLE_DEBUG=0>"
+)
+
 add_subdirectory(src)
 
 if(BUILD_EXAMPLES)
   add_subdirectory(examples)
 endif(BUILD_EXAMPLES)
+
+if(BUILD_TEST)
+  enable_testing()
+  add_subdirectory(tests)
+endif()
+
+# ------------------------------------------------------------------------------
+# installation
+# ------------------------------------------------------------------------------
 
 include(CMakePackageConfigHelpers)
 include(GNUInstallDirs)
