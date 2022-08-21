@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.10)
 
 set(SOURCE_FILES
+  ${PROJECT_SOURCE_DIR}/src/SuperGlue.cpp
   ${PROJECT_SOURCE_DIR}/src/SuperPoint.cpp
   ${PROJECT_SOURCE_DIR}/src/SuperPointModel.cpp
 )
