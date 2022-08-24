@@ -37,5 +37,6 @@ make apps -j`nproc`
 
 ---
 
-- [SuperPoint trained by magicleap](https://github.com/magicleap/SuperPointPretrainedNetwork)
+- [SuperGlue trained by magicleap](https://github.com/magicleap/SuperGluePretrainedNetwork)
 - [SuperPoint SLAM](https://github.com/KinglittleQ/SuperPoint_SLAM)
+- [Torch Tracing vs Torch Scripting](https://ppwwyyxx.com/blog/2022/TorchScript-Tracing-vs-Scripting/)

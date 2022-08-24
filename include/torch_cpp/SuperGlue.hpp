@@ -7,6 +7,9 @@
 
 #pragma once
 
+#include <string>
+#include <vector>
+
 #include <opencv2/opencv.hpp>
 
 namespace _cv
@@ -20,5 +23,10 @@ class SuperGlue
     };
 
     static cv::Ptr<SuperGlue> create(const Param& param);
+
+    virtual void match(cv::InputArray _queryDescriptors, const std::vector<cv::KeyPoint>& queryKeypoints,
+                       const cv::Size& querySize, cv::InputArray _trainDescriptors,
+                       const std::vector<cv::KeyPoint>& trainKeypoints, const cv::Size& trainSize,
+                       CV_OUT std::vector<cv::DMatch>& matches) const = 0;
 };
 }  // namespace _cv
