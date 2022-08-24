@@ -28,11 +28,18 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
 
       - name: Setup python
         uses: actions/setup-python@v4
         with:
           python-version: "3.x"
+
+      - name: Set ownership
+        run: |
+          # https://github.com/actions/runner/issues/2033
+          chown -R $(id -u):$(id -g) $PWD
 
       - name: Setup environment
         run: |

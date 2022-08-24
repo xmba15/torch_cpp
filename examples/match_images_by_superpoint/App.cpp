@@ -81,8 +81,8 @@ inline void findKeyPointsHomography(const std::vector<cv::KeyPoint>& kpts1, cons
     std::vector<cv::Point2f> pts1;
     std::vector<cv::Point2f> pts2;
     for (std::size_t i = 0; i < matches.size(); ++i) {
-        pts1.push_back(kpts1[matches[i].queryIdx].pt);
-        pts2.push_back(kpts2[matches[i].trainIdx].pt);
+        pts1.emplace_back(kpts1[matches[i].queryIdx].pt);
+        pts2.emplace_back(kpts2[matches[i].trainIdx].pt);
     }
     cv::findHomography(pts1, pts2, cv::RANSAC, 4, matchMask);
 }

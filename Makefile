@@ -30,8 +30,7 @@ debug_gpu_apps:
 	@make debug_apps USE_GPU=ON
 
 unittest:
-	@python3 -m pip install -r requirements-test.txt
-	@python3 scripts/download_test_data.py
+	@bash scripts/jit_superpoint_superglue_models.bash
 	@make default UTEST=ON
 	@cd build/tests && ./torch_cpp_unit_tests
 

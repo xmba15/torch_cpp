@@ -41,7 +41,12 @@ SuperGlueImpl::SuperGlueImpl(const SuperGlue::Param& param)
     if (m_param.pathToWeights.empty()) {
         throw std::runtime_error("empty path to weights");
     }
-    m_module = torch::jit::load(m_param.pathToWeights);
+    try {
+        m_module = torch::jit::load(m_param.pathToWeights);
+    } catch (const std::exception& e) {
+        INFO_LOG("%s", e.what());
+        exit(1);
+    }
 
 #if ENABLE_GPU
     if (!torch::cuda::is_available() && m_param.gpuIdx >= 0) {
@@ -70,12 +75,16 @@ void SuperGlueImpl::match(cv::InputArray _queryDescriptors, const std::vector<cv
         "image0_shape",
         torch::from_blob(
             std::vector<float>{1, 1, static_cast<float>(querySize.height), static_cast<float>(querySize.width)}.data(),
-            {4}, torch::kFloat));
+            {4}, torch::kFloat)
+            .clone());
     data.insert(
         "image1_shape",
         torch::from_blob(
             std::vector<float>{1, 1, static_cast<float>(trainSize.height), static_cast<float>(trainSize.width)}.data(),
-            {4}, torch::kFloat));
+            {4}, torch::kFloat)
+            .clone());
+    data.insert("match_threshold",
+                torch::from_blob(std::vector<float>{m_param.matchThreshold}.data(), {1}, torch::kFloat).clone());
 
     int numQueryKeyPoints = queryKeypoints.size();
     int numTrainKeyPoints = trainKeypoints.size();
@@ -88,8 +97,8 @@ void SuperGlueImpl::match(cv::InputArray _queryDescriptors, const std::vector<cv
                          {1, numTrainKeyPoints, _trainDescriptors.getMat().cols}, torch::kFloat);
     descriptors0 = descriptors0.permute({0, 2, 1}).contiguous();
     descriptors1 = descriptors1.permute({0, 2, 1}).contiguous();
-    data.insert("descriptors0", std::move(descriptors0));
-    data.insert("descriptors1", std::move(descriptors1));
+    data.insert("descriptors0", std::move(descriptors0).to(m_device));
+    data.insert("descriptors1", std::move(descriptors1).to(m_device));
 
     auto keyPoints0 = torch::zeros({1, numQueryKeyPoints, 2});
     auto scores0 = torch::zeros({1, numQueryKeyPoints});
@@ -105,20 +114,17 @@ void SuperGlueImpl::match(cv::InputArray _queryDescriptors, const std::vector<cv
         keyPoints1[0][i][1] = trainKeypoints[i].pt.x;
         scores1[0][i] = trainKeypoints[i].response;
     }
-    data.insert("keypoints0", std::move(keyPoints0));
-    data.insert("scores0", std::move(scores0));
-    data.insert("keypoints1", std::move(keyPoints1));
-    data.insert("scores1", std::move(scores1));
+    data.insert("keypoints0", std::move(keyPoints0).to(m_device));
+    data.insert("scores0", std::move(scores0).to(m_device));
+    data.insert("keypoints1", std::move(keyPoints1).to(m_device));
+    data.insert("scores1", std::move(scores1).to(m_device));
 
-    if (!m_device.is_cpu()) {
-        for (auto it = data.begin(); it != data.end(); ++it) {
-            data.insert(it->key(), it->value().to(m_device));
-        }
+    torch::Tensor matches0;
+    {
+        auto outputs = c10::impl::toTypedDict<std::string, torch::Tensor>(m_module.forward({data}).toGenericDict());
+        matches0 = outputs.at("matches0");
+        matches0 = matches0.detach().cpu();
     }
-
-    auto outputs = c10::impl::toTypedDict<std::string, torch::Tensor>(m_module.forward({data}).toGenericDict());
-    auto matches0 = outputs.at("matches0");
-    auto matches1 = outputs.at("matches1");
 
     for (int i = 0; i < numQueryKeyPoints; ++i) {
         if (matches0[0][i].item<std::int64_t>() < 0) {
@@ -128,6 +134,7 @@ void SuperGlueImpl::match(cv::InputArray _queryDescriptors, const std::vector<cv
         match.imgIdx = 0;
         match.queryIdx = i;
         match.trainIdx = matches0[0][i].item<std::int64_t>();
+
         matches.emplace_back(match);
     }
 }

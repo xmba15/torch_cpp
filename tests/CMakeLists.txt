@@ -13,6 +13,7 @@ configure_file (config.h.in config.h @ONLY)
 
 add_executable(
   ${PROJECT_NAME}_unit_tests
+  TestSuperGlue.cpp
   TestSuperPoint.cpp
 )
 

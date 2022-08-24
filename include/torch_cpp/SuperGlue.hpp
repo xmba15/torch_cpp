@@ -19,6 +19,7 @@ class SuperGlue
  public:
     struct Param {
         std::string pathToWeights = "";
+        float matchThreshold = 0.1;
         int gpuIdx = -1;  // use gpu >= 0 to specify cuda device
     };
 

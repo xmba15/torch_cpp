@@ -7,6 +7,12 @@
 
 #include <torch_cpp/torch_cpp.hpp>
 
+namespace
+{
+inline void findKeyPointsHomography(const std::vector<cv::KeyPoint>& kpts1, const std::vector<cv::KeyPoint>& kpts2,
+                                    const std::vector<cv::DMatch>& matches, std::vector<char>& matchMask);
+}  // namespace
+
 int main(int argc, char* argv[])
 {
     if (argc != 5) {
@@ -53,5 +59,33 @@ int main(int argc, char* argv[])
     superGlue->match(descriptorsList[0], keyPointsList[0], images[0].size(), descriptorsList[1], keyPointsList[1],
                      images[1].size(), matches);
 
+    std::vector<char> matchMask(matches.size(), 1);
+    ::findKeyPointsHomography(keyPointsList[0], keyPointsList[1], matches, matchMask);
+    cv::Mat res;
+    cv::drawMatches(images[0], keyPointsList[0], images[1], keyPointsList[1], matches, res, cv::Scalar::all(-1),
+                    cv::Scalar::all(-1), matchMask, cv::DrawMatchesFlags::NOT_DRAW_SINGLE_POINTS);
+
+    cv::imwrite("super_point_super_glue_good_matches.jpg", res);
+    cv::imshow("super_point_super_glue_good_matches", res);
+    cv::waitKey();
+
     return EXIT_SUCCESS;
 }
+
+namespace
+{
+inline void findKeyPointsHomography(const std::vector<cv::KeyPoint>& kpts1, const std::vector<cv::KeyPoint>& kpts2,
+                                    const std::vector<cv::DMatch>& matches, std::vector<char>& matchMask)
+{
+    if (matchMask.size() < 3) {
+        return;
+    }
+    std::vector<cv::Point2f> pts1;
+    std::vector<cv::Point2f> pts2;
+    for (std::size_t i = 0; i < matches.size(); ++i) {
+        pts1.emplace_back(kpts1[matches[i].queryIdx].pt);
+        pts2.emplace_back(kpts2[matches[i].trainIdx].pt);
+    }
+    cv::findHomography(pts1, pts2, cv::RANSAC, 4, matchMask);
+}
+}  // namespace
