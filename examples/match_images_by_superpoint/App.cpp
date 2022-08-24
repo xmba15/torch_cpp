@@ -53,7 +53,7 @@ int main(int argc, char* argv[])
     matcher.match(descriptorsList[0], descriptorsList[1], matches, cv::Mat());
     std::sort(matches.begin(), matches.end());
     double kDistanceCoef = 4.0;
-    while (matches.front().distance * kDistanceCoef < matches.back().distance) {
+    while (!matches.empty() && matches.front().distance * kDistanceCoef < matches.back().distance) {
         matches.pop_back();
     }
 

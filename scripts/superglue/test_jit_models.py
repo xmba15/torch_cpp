@@ -17,6 +17,9 @@ def get_args():
     parser.add_argument("--image0", "-i0", type=str, required=True)
     parser.add_argument("--image1", "-i1", type=str, required=True)
     parser.add_argument("--match_threshold", "-m", type=float, default=0.2)
+    parser.add_argument("--keypoint_threshold", "-k", type=float, default=0.2)
+    parser.add_argument("--remove_borders", "-r", type=int, default=4)
+    parser.add_argument("--nms_radius", "-n", type=int, default=2)
 
     return parser.parse_args()
 
@@ -40,7 +43,14 @@ def main(args):
     inps = [input[1] for input in input_data]
 
     batch_inp = torch.cat(inps, dim=0)
-    batch_result = superpoint({"image": batch_inp})
+    batch_result = superpoint(
+        {
+            "image": batch_inp,
+            "keypoint_threshold": torch.Tensor([args.keypoint_threshold]),
+            "remove_borders": torch.LongTensor([args.remove_borders]),
+            "nms_radius": torch.LongTensor([args.nms_radius]),
+        }
+    )
 
     for (key, val) in batch_result.items():
         print(key, val[0].shape, val[0].dtype)
