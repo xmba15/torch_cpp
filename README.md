@@ -52,9 +52,9 @@ make gpu_apps -j`nproc`
 ```bash
 git submodule update --init --recursive
 export ROOT_DIR="$(pwd)"
-python3 -m pip install -r $ROOT_DIR/scripts/superglue/SuperGluePretrainedNetwork/requirements.txt
 cd $ROOT_DIR/scripts/superglue/SuperGluePretrainedNetwork/
 git apply ../jit_patch.patch
+python3 -m pip install -r $ROOT_DIR/scripts/superglue/SuperGluePretrainedNetwork/requirements.txt
 cd $ROOT_DIR
 python3 $ROOT_DIR/scripts/superglue/jit_superglue_model.py
 python3 $ROOT_DIR/scripts/superglue/jit_superpoint_model.py

@@ -30,4 +30,3 @@ class CV_EXPORTS_W SuperPoint : public cv::Feature2D
     CV_WRAP static cv::Ptr<SuperPoint> create(const Param& param);
 };
 }  // namespace _cv
-// torch::Device(torch::kCUDA, 0)

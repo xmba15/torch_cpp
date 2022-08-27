@@ -7,9 +7,7 @@
 
 #pragma once
 
-#if ENABLE_DEBUG
 #include <iostream>
-#endif
 
 namespace _cv
 {
