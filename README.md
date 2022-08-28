@@ -77,5 +77,6 @@ python3 $ROOT_DIR/scripts/superglue/jit_superpoint_model.py
 - [SuperGlue trained by magicleap](https://github.com/magicleap/SuperGluePretrainedNetwork)
 - [SuperPoint SLAM](https://github.com/KinglittleQ/SuperPoint_SLAM)
 - [Torch Tracing vs Torch Scripting](https://ppwwyyxx.com/blog/2022/TorchScript-Tracing-vs-Scripting/)
+- [ORB-SLAM: a Versatile and Accurate Monocular SLAM System](https://arxiv.org/pdf/1502.00956.pdf)
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>

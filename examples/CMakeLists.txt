@@ -5,3 +5,5 @@ add_subdirectory(match_images_by_superpoint)
 add_subdirectory(match_images_superglue)
 
 add_subdirectory(visualize_superpoint)
+
+add_subdirectory(visual_odometry)
