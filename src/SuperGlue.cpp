@@ -89,39 +89,43 @@ void SuperGlueImpl::match(cv::InputArray _queryDescriptors, const std::vector<cv
     int numQueryKeyPoints = queryKeypoints.size();
     int numTrainKeyPoints = trainKeypoints.size();
 
-    torch::Tensor descriptors0 =
+    std::vector<torch::Tensor> descriptorsList = {
         torch::from_blob(_queryDescriptors.getMat().ptr<float>(),
-                         {1, numQueryKeyPoints, _queryDescriptors.getMat().cols}, torch::kFloat);
-    torch::Tensor descriptors1 =
+                         {1, numQueryKeyPoints, _queryDescriptors.getMat().cols}, torch::kFloat),
         torch::from_blob(_trainDescriptors.getMat().ptr<float>(),
-                         {1, numTrainKeyPoints, _trainDescriptors.getMat().cols}, torch::kFloat);
-    descriptors0 = descriptors0.permute({0, 2, 1}).contiguous();
-    descriptors1 = descriptors1.permute({0, 2, 1}).contiguous();
-    data.insert("descriptors0", std::move(descriptors0).to(m_device));
-    data.insert("descriptors1", std::move(descriptors1).to(m_device));
+                         {1, numTrainKeyPoints, _trainDescriptors.getMat().cols}, torch::kFloat)};
 
-    auto keyPoints0 = torch::zeros({1, numQueryKeyPoints, 2});
-    auto scores0 = torch::zeros({1, numQueryKeyPoints});
+    for (int i = 0; i < 2; ++i) {
+        descriptorsList[i] = descriptorsList[i].permute({0, 2, 1}).contiguous();
+        data.insert("descriptors" + std::to_string(i), std::move(descriptorsList[i]).to(m_device));
+    }
+
+    std::vector<torch::Tensor> keyPointsList = {torch::zeros({1, numQueryKeyPoints, 2}),
+                                                torch::zeros({1, numTrainKeyPoints, 2})};
+    std::vector<torch::Tensor> scoresList = {torch::zeros({1, numQueryKeyPoints}),
+                                             torch::zeros({1, numTrainKeyPoints})};
+
     for (int i = 0; i < numQueryKeyPoints; ++i) {
-        keyPoints0[0][i][0] = queryKeypoints[i].pt.y;
-        keyPoints0[0][i][1] = queryKeypoints[i].pt.x;
-        scores0[0][i] = queryKeypoints[i].response;
+        keyPointsList[0][0][i][0] = queryKeypoints[i].pt.y;
+        keyPointsList[0][0][i][1] = queryKeypoints[i].pt.x;
+        scoresList[0][0][i] = queryKeypoints[i].response;
     }
-    auto keyPoints1 = torch::zeros({1, numTrainKeyPoints, 2});
-    auto scores1 = torch::zeros({1, numTrainKeyPoints});
+
     for (int i = 0; i < numTrainKeyPoints; ++i) {
-        keyPoints1[0][i][0] = trainKeypoints[i].pt.y;
-        keyPoints1[0][i][1] = trainKeypoints[i].pt.x;
-        scores1[0][i] = trainKeypoints[i].response;
+        keyPointsList[1][0][i][0] = trainKeypoints[i].pt.y;
+        keyPointsList[1][0][i][1] = trainKeypoints[i].pt.x;
+        scoresList[1][0][i] = trainKeypoints[i].response;
     }
-    data.insert("keypoints0", std::move(keyPoints0).to(m_device));
-    data.insert("scores0", std::move(scores0).to(m_device));
-    data.insert("keypoints1", std::move(keyPoints1).to(m_device));
-    data.insert("scores1", std::move(scores1).to(m_device));
+
+    for (int i = 0; i < 2; ++i) {
+        data.insert("keypoints" + std::to_string(i), std::move(keyPointsList[i]).to(m_device));
+        data.insert("scores" + std::to_string(i), std::move(scoresList[i]).to(m_device));
+    }
 
     torch::Tensor matches0;
     {
-        auto outputs = c10::impl::toTypedDict<std::string, torch::Tensor>(m_module.forward({data}).toGenericDict());
+        auto outputs =
+            c10::impl::toTypedDict<std::string, torch::Tensor>(m_module.forward({std::move(data)}).toGenericDict());
         matches0 = outputs.at("matches0");
         matches0 = matches0.detach().cpu();
     }
