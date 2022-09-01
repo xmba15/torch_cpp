@@ -16,10 +16,12 @@ namespace _cv
 class CV_EXPORTS_W SuperPoint : public cv::Feature2D
 {
  public:
-    static constexpr int IMAGE_HEIGHT = 480;
-    static constexpr int IMAGE_WIDTH = 640;
-
     struct Param {
+        // reduce input shapes can increase speed and reduce (GPU) memory consumption
+        // at the cost of accuracy
+        int imageHeight = 480;
+        int imageWidth = 640;
+
         std::string pathToWeights = "";
         int borderRemove = 4;
         float confidenceThresh = 0.015;

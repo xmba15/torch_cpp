@@ -59,6 +59,7 @@ SuperGlueImpl::SuperGlueImpl(const SuperGlue::Param& param)
 #endif
 
     if (m_param.gpuIdx >= 0) {
+        torch::NoGradGuard no_grad;
         m_device = torch::Device(torch::kCUDA, m_param.gpuIdx);
     }
     m_module.eval();
