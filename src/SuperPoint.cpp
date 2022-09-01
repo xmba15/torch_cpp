@@ -53,6 +53,10 @@ SuperPointImpl::SuperPointImpl(const SuperPoint::Param& param)
     : m_param(param)
     , m_device(torch::kCPU)
 {
+    if (m_param.imageHeight <= 0 || m_param.imageWidth <= 0) {
+        throw std::runtime_error("dimension must be more than 0");
+    }
+
     if (m_param.pathToWeights.empty()) {
         throw std::runtime_error("empty path to weights");
     }
@@ -74,6 +78,7 @@ SuperPointImpl::SuperPointImpl(const SuperPoint::Param& param)
 #endif
 
     if (m_param.gpuIdx >= 0) {
+        torch::NoGradGuard no_grad;
         m_device = torch::Device(torch::kCUDA, m_param.gpuIdx);
     }
     DEBUG_LOG("use device: %s", m_device.str().c_str());
@@ -101,10 +106,10 @@ void SuperPointImpl::detectAndCompute(cv::InputArray _image, cv::InputArray _mas
     torch::Dict<std::string, std::vector<torch::Tensor>> outputs;
     {
         cv::Mat buffer;
-        cv::resize(image, buffer, cv::Size(IMAGE_WIDTH, IMAGE_HEIGHT), 0, 0, cv::INTER_CUBIC);
+        cv::resize(image, buffer, cv::Size(m_param.imageWidth, m_param.imageHeight), 0, 0, cv::INTER_CUBIC);
         buffer.convertTo(buffer, CV_32FC1, 1 / 255.);
 
-        auto x = torch::from_blob(buffer.ptr<float>(), {1, 1, IMAGE_HEIGHT, IMAGE_WIDTH}, torch::kFloat);
+        auto x = torch::from_blob(buffer.ptr<float>(), {1, 1, m_param.imageHeight, m_param.imageWidth}, torch::kFloat);
         x = x.set_requires_grad(false);
 
         if (!m_device.is_cpu()) {
@@ -129,7 +134,7 @@ void SuperPointImpl::detectAndCompute(cv::InputArray _image, cv::InputArray _mas
 
     // preparing mask
     if (!mask.empty()) {
-        cv::resize(mask, mask, cv::Size(IMAGE_WIDTH, IMAGE_HEIGHT), 0, 0, cv::INTER_NEAREST);
+        cv::resize(mask, mask, cv::Size(m_param.imageWidth, m_param.imageHeight), 0, 0, cv::INTER_NEAREST);
     }
 
     {
@@ -158,8 +163,8 @@ void SuperPointImpl::detectAndCompute(cv::InputArray _image, cv::InputArray _mas
                 continue;
             }
             cv::KeyPoint newKeyPoint;
-            newKeyPoint.pt.x = x * static_cast<float>(image.cols) / IMAGE_WIDTH;
-            newKeyPoint.pt.y = y * static_cast<float>(image.rows) / IMAGE_HEIGHT;
+            newKeyPoint.pt.x = x * static_cast<float>(image.cols) / m_param.imageWidth;
+            newKeyPoint.pt.y = y * static_cast<float>(image.rows) / m_param.imageHeight;
             newKeyPoint.response = scoresT[i].item<float>();
             keyPoints.emplace_back(std::move(newKeyPoint));
             keepIndices.emplace_back(i);
