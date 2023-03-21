@@ -30,3 +30,13 @@ target_compile_options(${LIBRARY_NAME}
      $<$<CONFIG:Debug>:-O0 -g -Wall -Werror>
      $<$<CONFIG:Release>:-O3 -Wall -Werror>
 )
+
+set_target_properties(${LIBRARY_NAME}
+  PROPERTIES
+    $<$<COMPILE_LANGUAGE:CUDA>:CUDA_STANDARD 14>
+)
+
+target_compile_features(${LIBRARY_NAME}
+  PRIVATE
+    cxx_std_17
+)
